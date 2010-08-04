@@ -5,14 +5,19 @@
 
 package jmscrawler;
 
+
 /**
  *
  * @author herberth
  */
 public class Crawler implements Runnable{
 
+    MessageBase jms;
+
+
     public void run() {
         System.out.print("Executando Crawler..");
+        jms = new MessageBase("crawler");
     }
 
 }
