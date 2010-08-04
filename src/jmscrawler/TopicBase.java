@@ -26,7 +26,7 @@ import javax.jms.TopicSubscriber;
  *
  * @author herberth
  */
-public class MessageBase {
+public class TopicBase {
     private TopicSession session;
     private Context jndiContext;
     private TopicPublisher publisher;
@@ -35,7 +35,7 @@ public class MessageBase {
     private TopicConnection con;
     private MessageListener listener;
 
-    public MessageBase(String _topic)
+    public TopicBase(String _topic)
     {
         System.setProperty("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
         System.setProperty("java.naming.factory.url.pkgs", "org.jnp.interfaces");

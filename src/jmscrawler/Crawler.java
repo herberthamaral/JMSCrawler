@@ -16,7 +16,7 @@ import javax.jms.MessageListener;
  */
 public class Crawler implements Runnable{
 
-    MessageBase jms;
+    TopicBase jms;
 
     public Crawler(String urlDeInicio)
     {
@@ -24,7 +24,7 @@ public class Crawler implements Runnable{
     }
     public void run() {
         System.out.print("Executando Crawler..");
-        jms = new MessageBase("topic/crawler");
+        jms = new TopicBase("topic/crawler");
         try {
             jms.setMessageListener(new MessageListener() {
 
