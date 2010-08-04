@@ -5,6 +5,10 @@
 
 package jmscrawler;
 
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageListener;
+
 
 /**
  *
@@ -14,10 +18,28 @@ public class Crawler implements Runnable{
 
     MessageBase jms;
 
-
+    public Crawler(String urlDeInicio)
+    {
+        
+    }
     public void run() {
         System.out.print("Executando Crawler..");
-        jms = new MessageBase("crawler");
+        jms = new MessageBase("topic/crawler");
+        try {
+            jms.setMessageListener(new MessageListener() {
+
+                public void onMessage(Message msg) {
+                    onmessage(msg);
+                }
+            });
+        } catch (JMSException ex) {
+            //Adicionar algum tratamento de erros aqui
+        }
+    }
+
+    public void onmessage(Message msg)
+    {
+        System.out.println("recebendo mensagem");
     }
 
 }

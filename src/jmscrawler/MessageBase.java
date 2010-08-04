@@ -35,7 +35,7 @@ public class MessageBase {
     private TopicConnection con;
     private MessageListener listener;
 
-    public MessageBase(String queue)
+    public MessageBase(String _topic)
     {
         System.setProperty("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
         System.setProperty("java.naming.factory.url.pkgs", "org.jnp.interfaces");
@@ -43,7 +43,7 @@ public class MessageBase {
         try {
 
             jndiContext = new InitialContext();
-            topic =  (Topic) jndiContext.lookup("topic/crawler");
+            topic =  (Topic) jndiContext.lookup(_topic);
             
             TopicConnectionFactory topicFactory = (TopicConnectionFactory) jndiContext.lookup("ConnnectionFactory");
             
