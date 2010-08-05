@@ -28,6 +28,8 @@ public class Main {
 
     private static final int MAX_THREADS=8;
     private static int NUM_THREADS=0;
+    private static final int MAX_ITERATIONS_WITHOUT_LINKS = 6;
+
     private static String baseUrl = "http://herberthamaral.com/";
     private static QueueBase jms;
 
@@ -120,6 +122,7 @@ public class Main {
         
         // verificar se o Jboss não contem um link pronto
         new Thread(new Crawler(baseUrl)).start();
+        int numberOfIterationsWithoutLinks = 0;
         for(;;)
         {
             if (NUM_THREADS<MAX_THREADS)
@@ -133,14 +136,22 @@ public class Main {
                     new Thread(new Crawler(link)).start();
                 }
                 else
+                {
+                    numberOfIterationsWithoutLinks++;
+                    if (numberOfIterationsWithoutLinks==MAX_ITERATIONS_WITHOUT_LINKS)
+                    {
+                        System.out.println("Parece que meu trabalho acabou.... see ya!");
+                        break;
+                    }
                     System.out.print("Sem novos links por enquanto... aguardando por mais...");
+                }
             }
             else
             {
                 System.out.println("Número máximo de threads rodando simultaneamente alcaçado... dormindo um pouco...");
-                Thread.sleep(500);
+                Thread.sleep(5000);
             }
         }
+        jms.finish();
     }
-
 }
