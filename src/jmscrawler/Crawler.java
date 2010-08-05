@@ -22,35 +22,19 @@ public class Crawler implements Runnable{
 
     QueueBase jms;
     String url;
+
     public Crawler(String urlDeInicio)
     {
         url = urlDeInicio;
-        jms = new QueueBase("queue/Crawler");
-        try {
-            jms.setMessageListener(new MessageListener() {
-
-                public void onMessage(Message msg) {
-                    onmessage(msg);
-                }
-            });
-        } catch (JMSException ex) {
-            //Adicionar algum tratamento de erros aqui
-        }
     }
+
     public void run() {
         try {
             LinkExtractor.Extract(url);
-        } catch (MalformedURLException ex) {
-            Logger.getLogger(Crawler.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(Crawler.class.getName()).log(Level.SEVERE, null, ex);
+        }catch(Exception e)
+        {
+            System.out.println("Ooops...");
+            e.printStackTrace();
         }
-        System.out.print("Executando Crawler..");
     }
-
-    public void onmessage(Message msg)
-    {
-        System.out.println("recebendo mensagem");
-    }
-
 }

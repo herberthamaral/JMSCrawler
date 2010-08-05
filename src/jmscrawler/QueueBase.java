@@ -66,11 +66,18 @@ public class QueueBase {
        consumer.setMessageListener(listener);
    }
 
-    public void sendMessage() throws JMSException
+    public void sendMessage(String text)
     {
-        MessageProducer producer = session.createProducer(destination);
-        TextMessage message = (TextMessage) session.createMessage(); // será se rola uma mensagem de um objeto com mais indicadores das nossas regras de negócio?
-        producer.send(message);
+        try
+        {
+            MessageProducer producer = session.createProducer(destination);
+            TextMessage message = (TextMessage) session.createTextMessage(text); // será se rola uma mensagem de um objeto com mais indicadores das nossas regras de negócio?
+            producer.send(message);
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
     }
 
     public void finish()
