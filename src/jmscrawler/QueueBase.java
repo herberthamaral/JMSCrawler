@@ -5,22 +5,19 @@
 
 package jmscrawler;
 
+
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
+import javax.jms.QueueReceiver;
 import javax.jms.Session;
 import javax.jms.TextMessage;
-import javax.jms.Topic;
-import javax.jms.TopicConnectionFactory;
-import javax.jms.TopicPublisher;
-import javax.jms.TopicSession;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.jms.TopicConnection;
-import javax.jms.TopicSubscriber;
 
 /**
  *
@@ -29,7 +26,6 @@ import javax.jms.TopicSubscriber;
 public class QueueBase {
     private Session session;
     private Context jndiContext;
-    private TopicPublisher publisher;
     private MessageConsumer consumer;
     private Destination destination;
     private TopicConnection con;
@@ -78,6 +74,20 @@ public class QueueBase {
         {
             e.printStackTrace();
         }
+    }
+
+    public String getMessage()
+    {
+        try {
+
+            QueueReceiver receiver = (QueueReceiver) session.createConsumer(destination);
+            String m;
+            m = ((TextMessage)receiver.receive(5000)).getText();
+            return m;
+        } catch (Exception ex) {
+            System.out.println("Oops... parece que não temos nada mais na fila de urls...");
+        }
+        return "";
     }
 
     public void finish()

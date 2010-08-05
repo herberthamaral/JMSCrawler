@@ -1,15 +1,9 @@
 package jmscrawler;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.MessageListener;
-import javax.jms.TextMessage;
+
 
 /**
  *
@@ -17,20 +11,35 @@ import javax.jms.TextMessage;
  */
 public class Main {
 
-    /**
-     * @param args the command line arguments
-     */
 
+
+    //Lista de links descobertos
     private static HashSet listaLinks;
+
+    //lista de links já baixados
     private static HashMap listaLinksBaixados;
+
+    //lista de domínios descobertos
     private static HashSet listaDominios;
+
+    //lista de domínios já completamente baixados
     private static HashSet listaDominiosConcluidos;
 
-    private static final int MAX_THREADS=8;
+    // número máximo de Threads de downloads que o programa pode executar
+    private static final int MAX_THREADS=256;
+
+    //número de threads atuais
     private static int NUM_THREADS=0;
+
+    // Número máximo de iterações sem links. Isto é importante para determinar
+    // quando terminamos de baixar o domínio completamente
     private static final int MAX_ITERATIONS_WITHOUT_LINKS = 6;
 
+    //url que vamos começar
     private static String baseUrl = "http://herberthamaral.com/";
+
+    //Um utilitário para o JMS. Ele encapsula toda a burocracia e acesso
+    //ao servidor de mensagens
     private static QueueBase jms;
 
     public static String getBaseUrl()
@@ -38,6 +47,10 @@ public class Main {
         return baseUrl;
     }
 
+    /**
+     * Método utilizado para reportar um novo link ou um novo domínio ao crawler
+     * @param link link a ser reportado
+     */
     public static synchronized void addLink(String link)
     {
         // verifica se o link está no mesmo domínio ou se o mesmo já não foi incluído
@@ -62,22 +75,29 @@ public class Main {
             }
         }
 
-        link = link.split("#")[0];
+        try{
+            //Adaptação para remover âncoras dos links
+            link = link.split("#")[0];
+        }catch(Exception e){}
+        
+        if(!link.startsWith(baseUrl))
+                link = baseUrl+link;
+        
         if(!listaLinks.contains(link) && !listaLinksBaixados.containsKey(link) && !fromAnotherDomain)
         {
-            
             listaLinks.add(link);
             System.out.println("Adicionando mais um link: "+link);
-            // tenta iniciar nova thread para pegar mais links
-            
         }
     }
 
-    public static synchronized String getNextURLToDownload()
-    {
-        return null;
-    }
 
+    /**
+     * Adiciona uma nova URL na lista de urls já concluídas. A thread de download
+     * geralmente morre aqui.
+     * 
+     * @param url URL
+     * @param content Conteúdo da URL
+     */
     public static synchronized void reportDownloadedURL(String url,String content)
     {
         if (!listaLinksBaixados.containsKey(url))
@@ -94,34 +114,26 @@ public class Main {
         listaDominiosConcluidos = new HashSet();
         listaLinksBaixados = new HashMap();
 
-        jms = new QueueBase("queue/Crawler");
+        jms = new QueueBase("queue/Crawl");
 
         listaDominios.add(baseUrl); // verificar se o jboss não contem uma URL para baixarmos
         listaDominiosConcluidos.add(baseUrl);
         listaLinks.add(baseUrl);
         
         jms.sendMessage(baseUrl);
-
-        jms = new QueueBase("queue/Crawler");
-        try {
-            jms.setMessageListener(new MessageListener() {
-
-                public void onMessage(Message msg) {
-                    TextMessage message = (TextMessage) msg;
-                    try {
-                        addLink(message.getText());
-                    } catch (JMSException ex) {
-                        System.out.println("Erro ao receber a mensagem: "+ex.toString());
-                        ex.printStackTrace();
-                    }
-                }
-            });
-        } catch (JMSException ex) {
-            ex.printStackTrace();
-        }
         
         // verificar se o Jboss não contem um link pronto
-        new Thread(new Crawler(baseUrl)).start();
+        String urlFromServer = jms.getMessage();
+
+
+        if(!urlFromServer.equals(""))
+        {
+            baseUrl = urlFromServer;
+            new Thread(new Crawler(urlFromServer)).start(); // se tiver, baixa dele
+        }
+        else
+            new Thread(new Crawler(baseUrl)).start();
+        
         int numberOfIterationsWithoutLinks = 0;
         for(;;)
         {
@@ -133,6 +145,7 @@ public class Main {
                 {
                     String link = listaLinks.iterator().next().toString();
                     listaLinks.remove(link);
+                    numberOfIterationsWithoutLinks = 0;
                     new Thread(new Crawler(link)).start();
                 }
                 else
@@ -140,10 +153,19 @@ public class Main {
                     numberOfIterationsWithoutLinks++;
                     if (numberOfIterationsWithoutLinks==MAX_ITERATIONS_WITHOUT_LINKS)
                     {
-                        System.out.println("Parece que meu trabalho acabou.... see ya!");
+                        System.out.println("Parece que meu trabalho acabou.... tentando obter novo domínio para crawlear!");
+
+                        String dominio = jms.getMessage();
+                        if(!dominio.equals(""))
+                        {
+                            System.out.print("YAY! Achei um novo domínio: "+dominio);
+                            baseUrl = dominio;
+                            new Thread(new Crawler(dominio)).start();
+                        }
                         break;
                     }
                     System.out.print("Sem novos links por enquanto... aguardando por mais...");
+                    Thread.sleep(5000);
                 }
             }
             else

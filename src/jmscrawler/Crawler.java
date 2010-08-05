@@ -5,15 +5,6 @@
 
 package jmscrawler;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.MessageListener;
-
-
 /**
  *
  * @author herberth
