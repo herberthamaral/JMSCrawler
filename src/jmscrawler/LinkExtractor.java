@@ -20,10 +20,11 @@ import javax.swing.text.html.parser.ParserDelegator;
  * @author herberth
  */
 public class LinkExtractor {
-    public static void Extract(String location) throws MalformedURLException, IOException
+    public static void Extract(String location)
     {
         System.out.println("Iniciando o download de uma nova URL: "+location);
         HashSet urls = new HashSet();
+        try{
         URL url = new URL( location );
         
         HTMLEditorKit kit = new HTMLEditorKit();
@@ -34,6 +35,7 @@ public class LinkExtractor {
         LinkExtractorCallback callback = new LinkExtractorCallback();
         ParserDelegator delegator = new ParserDelegator();
         delegator.parse(HTMLReader, callback, true);
+        }catch (Exception e){  }
         Main.reportDownloadedURL(location, "OK"); // ver como pega o conteúdo do arquivo...
     }
 }
