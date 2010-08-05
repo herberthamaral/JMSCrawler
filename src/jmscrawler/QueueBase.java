@@ -5,12 +5,12 @@
 
 package jmscrawler;
 
-
-import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
 import javax.jms.JMSException;
+import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
+import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
@@ -26,16 +26,16 @@ import javax.jms.TopicSubscriber;
  *
  * @author herberth
  */
-public class TopicBase {
-    private TopicSession session;
+public class QueueBase {
+    private Session session;
     private Context jndiContext;
     private TopicPublisher publisher;
-    private TopicSubscriber subscriber;
-    private Topic topic;
+    private MessageConsumer consumer;
+    private Destination destination;
     private TopicConnection con;
     private MessageListener listener;
 
-    public TopicBase(String _topic)
+    public QueueBase(String _topic)
     {
         System.setProperty("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
         System.setProperty("java.naming.factory.url.pkgs", "org.jnp.interfaces");
@@ -43,13 +43,15 @@ public class TopicBase {
         try {
 
             jndiContext = new InitialContext();
-            topic =  (Topic) jndiContext.lookup(_topic);
+            destination =  (Destination) jndiContext.lookup(_topic);
             
-            TopicConnectionFactory topicFactory = (TopicConnectionFactory) jndiContext.lookup("ConnnectionFactory");
+            ConnectionFactory factory = (ConnectionFactory) jndiContext.lookup("ConnectionFactory");
             
-            con = topicFactory.createTopicConnection();
+            con = (TopicConnection) factory.createConnection();
             
-            session = con.createTopicSession(false, TopicSession.AUTO_ACKNOWLEDGE);
+            session = con.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            consumer = session.createConsumer(destination);
+
             con.start();
             
         }
@@ -61,14 +63,14 @@ public class TopicBase {
    public void setMessageListener(MessageListener listener) throws JMSException
    {
        this.listener = listener;
-       subscriber.setMessageListener(listener);
+       consumer.setMessageListener(listener);
    }
 
     public void sendMessage() throws JMSException
     {
-        TopicPublisher publihser = session.createPublisher(topic);
+        MessageProducer producer = session.createProducer(destination);
         TextMessage message = (TextMessage) session.createMessage(); // será se rola uma mensagem de um objeto com mais indicadores das nossas regras de negócio?
-        publihser.publish(message);
+        producer.send(message);
     }
 
     public void finish()
